@@ -20,7 +20,7 @@ jobs:
         echo "Extracting foodconnect.zip..."
         unzip -o foodconnect.zip -d .
         echo "Files extracted successfully!"
-        ls -la # Extracted files ko verify karne ke liye
+        ls -la # Extracted files ko check karne ke liye
 
     # 3. Java Environment (JDK 17) setup karna
     - name: Set up JDK 17
@@ -30,7 +30,7 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    # 4. AGAR GRADLEW MISSING HAI TOH AUTOMATIC GENERATE KARNA (NEW FIX)
+    # 4. AGAR GRADLEW MISSING HAI TOH AUTOMATIC GENERATE KARNA
     - name: Generate Gradle Wrapper if missing
       run: |
         if [ ! -f gradlew ]; then
@@ -40,15 +40,24 @@ jobs:
           echo "gradlew file pehle se maujood hai."
         fi
 
-    # 5. Gradle script (gradlew) ko execution permission dena
+    # 5. AUTOMATIC DEBUG KEYSTORE GENERATE KARNA (NEW FIX FOR SIGNING ERROR)
+    - name: Generate Debug Keystore
+      run: |
+        echo "Temporary debug.keystore file generate ho rahi hai..."
+        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        # Isko app folder me bhi copy kar dete hain safe side ke liye
+        cp debug.keystore app/debug.keystore || true
+        echo "Keystore successfully generate ho gaya!"
+
+    # 6. Gradle script (gradlew) ko execution permission dena
     - name: Grant Execute Permission for Gradlew
       run: chmod +x gradlew
 
-    # 6. Android Debug APK build karna
+    # 7. Android Debug APK build karna
     - name: Build Debug APK
       run: ./gradlew assembleDebug
 
-    # 7. Build hone ke baad APK ko safe download link me convert karna
+    # 8. Build hone ke baad APK ko safe download link me convert karna
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
